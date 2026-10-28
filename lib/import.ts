@@ -50,6 +50,8 @@ export async function importItems(items: RondItem[], source: string) {
       special: it.advertSpecialType ?? null,
       patternTags: detectPatterns(p.body, p.prefix).map((t) => t.key),
       source,
+      lastSeenAt: new Date(),
+      active: true,
     };
     numbers.push(p.full);
     ops.push(prisma.listing.upsert({ where: { number: p.full }, create: { number: p.full, ...data }, update: data }));

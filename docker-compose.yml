@@ -9,5 +9,23 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+
+  # Hourly rond.ir sync: docker compose --profile worker up -d
+  worker:
+    profiles: ["worker"]
+    image: node:22
+    working_dir: /app
+    command: sh -c "npm ci && npx prisma migrate deploy && npm run rond:sync"
+    environment:
+      DATABASE_URL: postgresql://rond:rond@db:5432/rond
+      ROND_COOKIE: ${ROND_COOKIE:-}
+    volumes:
+      - .:/app
+      - worker_node_modules:/app/node_modules
+    depends_on:
+      - db
+    restart: unless-stopped
+
 volumes:
   pgdata:
+  worker_node_modules:

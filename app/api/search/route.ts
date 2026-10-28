@@ -14,12 +14,12 @@ export async function GET(req: Request) {
   const [rows, stats] = await Promise.all([
     prisma.$queryRaw<{ number: string; price: bigint | null; status: string | null }[]>`
       SELECT "number", "price", "status" FROM "Listing"
-      WHERE "number" LIKE ${pattern}
+      WHERE "number" LIKE ${pattern} AND "active"
       ORDER BY "price" ASC NULLS LAST LIMIT 200`,
     prisma.$queryRaw<{ total: bigint; priced: bigint; median: number | null }[]>`
       SELECT count(*) AS total, count("price") AS priced,
              percentile_cont(0.5) WITHIN GROUP (ORDER BY "price") AS median
-      FROM "Listing" WHERE "number" LIKE ${pattern}`,
+      FROM "Listing" WHERE "number" LIKE ${pattern} AND "active"`,
   ]);
   return NextResponse.json({
     prefix,

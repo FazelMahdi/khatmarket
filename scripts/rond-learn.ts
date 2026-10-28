@@ -95,8 +95,8 @@ async function main() {
   console.log("\npre-code factors (vs 0912):", model.precodeFactor);
   console.log("status factors (vs LIKE_NEW):", model.statusFactor);
 
-  // 3. Backtest on a random sample: estimate each listing without itself.
-  const all: ListingInput[] = priced.map((r) => ({ number: r.number, price: Number(r.price), status: r.status }));
+  // 3. Backtest on a random sample: estimate each listing without itself (--backtest=0 skips it).
+  const all: ListingInput[] = (backtestN > 0 ? priced : []).map((r) => ({ number: r.number, price: Number(r.price), status: r.status }));
   const sample = [...all].sort(() => Math.random() - 0.5).slice(0, backtestN);
   const errors: number[] = [];
   const byMethod: Record<string, number[]> = {};
@@ -117,7 +117,7 @@ async function main() {
     within30pct: errors.filter((e) => e <= 0.3).length / (errors.length || 1),
     byMethod: Object.fromEntries(Object.entries(byMethod).map(([k, v]) => [k, { n: v.length, medianAbsPctError: median(v) }])),
   };
-  console.log(`\nbacktest: median error ${pct(summary.medianAbsPctError)}, within ±30%: ${pct(summary.within30pct)}`, summary.byMethod);
+  if (backtestN > 0) console.log(`\nbacktest: median error ${pct(summary.medianAbsPctError)}, within ±30%: ${pct(summary.within30pct)}`, summary.byMethod);
 
   writeFileSync("data/model.json", JSON.stringify(model, null, 2));
   writeFileSync("data/learn-report.json", JSON.stringify({ at: new Date().toISOString(), counts: { listings: rows.length, priced: priced.length, labelled: labelled.length }, detectors, model, backtest: summary }, null, 2));

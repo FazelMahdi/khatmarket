@@ -37,11 +37,30 @@ model Listing {
   patternTags String[]
   source      String   @default("import")
   importedAt  DateTime @default(now())
-
   updatedAt   DateTime @default(now()) @updatedAt
+  /// Last time a full sync saw this listing on rond.ir
+  lastSeenAt  DateTime @default(now())
+  /// false once a full sync no longer finds it (sold or removed)
+  active      Boolean  @default(true)
 
   @@index([prefix])
   @@index([code])
+  @@index([active, prefix])
+}
+
+/// One run of the hourly rond.ir sync worker
+model SyncRun {
+  id         String    @id @default(cuid())
+  startedAt  DateTime  @default(now())
+  finishedAt DateTime?
+  /// running | ok | failed
+  status     String    @default("running")
+  withLabels Boolean   @default(false)
+  seen       Int       @default(0)
+  deactivated Int      @default(0)
+  error      String?
+
+  @@index([startedAt])
 }
 
 model Lookup {
