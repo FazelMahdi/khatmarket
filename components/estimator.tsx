@@ -147,25 +147,28 @@ function Result({ r }: { r: Estimate }) {
 
         {r.neighbors.length > 0 && (
           <div>
-            <h3 className="mb-2 text-sm font-semibold">{r.method === "mask" ? "آگهی‌های همین الگو" : "نزدیک‌ترین آگهی‌ها"}</h3>
+            <h3 className="mb-2 text-sm font-semibold">{r.method === "mask" ? "آگهی‌های همین الگو" : r.method === "rond" ? "مشابه‌ترین شماره‌ها در rond.ir" : "نزدیک‌ترین آگهی‌ها"}</h3>
             <ul className="divide-y divide-separator rounded-2xl border border-separator">
-              {r.neighbors.slice(0, 5).map((n) => (
+              {r.neighbors.slice(0, r.method === "rond" ? 10 : 5).map((n) => (
                 <li key={n.number} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm">
                   <span className="digits font-medium">{n.number}</span>
-                  <span className="text-muted">{n.patterns.slice(0, 2).join("، ")}</span>
+                  <span className="text-muted">
+                    {r.method === "rond" && `${fmt.format(Math.round(n.similarity * 100))}٪ شباهت · `}
+                    {n.patterns.slice(0, 2).join("، ")}
+                  </span>
                   <span>{fmt.format(n.price)} تومان</span>
                 </li>
               ))}
             </ul>
           </div>
         )}
-        {r.pricedListings < 1000 && (
+        {r.method !== "rond" && r.pricedListings < 1000 && (
           <p className="rounded-xl bg-warning/10 px-3 py-2 text-xs">
             فقط {fmt.format(r.pricedListings)} آگهی در دیتابیس است؛ برای قیمت دقیق داده‌های rond.ir را جمع کنید (npm run rond:collect).
           </p>
         )}
         <p className="text-xs text-muted">
-          بر اساس {fmt.format(r.pricedListings)} آگهی قیمت‌دار. قیمت‌ها قیمت درخواستی فروشنده‌ها هستند و قیمت قطعی معامله نیستند.
+          بر اساس {fmt.format(r.pricedListings)} آگهی قیمت‌دار{r.method === "rond" && " که همین حالا در rond.ir پیدا شد"}. قیمت‌ها قیمت درخواستی فروشنده‌ها هستند و قیمت قطعی معامله نیستند.
         </p>
       </Card.Content>
     </Card>

@@ -48,7 +48,7 @@ export interface Estimate {
   neighbors: Neighbor[];
   pricedListings: number;
   /** How the price was found */
-  method: "exact" | "mask" | "similarity" | "none";
+  method: "exact" | "mask" | "similarity" | "rond" | "none";
   /** The digit-box search the price is based on (method "mask") */
   search: MaskSearch | null;
   /** Other searches a person could run, with their result counts */
