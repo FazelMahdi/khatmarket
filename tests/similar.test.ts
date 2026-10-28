@@ -13,6 +13,7 @@ const LISTED = [
   { simCardNumber: "09121003069", price: 5_200_000_000, types: [LOW, K] },
   { simCardNumber: "09121000010", price: null, types: [LOW, K] },
   { simCardNumber: "09122114199", price: 300_000_000, types: [] }, // shifted copy, no کد پایین
+  { simCardNumber: "09122002022", price: 18_000_000_000, types: [LOW, K] }, // same 00_0, plus four 2s
 ];
 
 /** Fake rond.ir: digit boxes + AND type filter, and rond-bot. */
@@ -41,7 +42,7 @@ describe("findSimilar", () => {
     const r = await findSimilar("09121003088", api);
     expect(r.types.map((t) => t.algorithm)).toEqual(["کد پایین", "هزاری از اول"]);
     // 09121903088 shares 6 boxes but breaks the 00_0 and is another type (تاریخ تولدی), so it ranks last.
-    expect(r.matches.map((m) => m.number)).toEqual(["09121003086", "09121003069", "09121003188", "09122114199", "09121903088"]);
+    expect(r.matches.map((m) => m.number)).toEqual(["09121003086", "09121003069", "09121003188", "09122002022", "09122114199", "09121903088"]);
     expect(r.price?.mid).toBe(4_800_000_000); // median 4.85B, 2 significant digits
   });
 

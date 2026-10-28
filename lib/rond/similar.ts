@@ -37,7 +37,7 @@ export interface SimilarListing {
   same: number;
   /** 0..1, how much the digit-equality shape matches */
   shape: number;
-  /** 0..1, share of the query's rond structure this number breaks */
+  /** 0..1, share of rond structure broken either way (09122002022 adds 2s to 1003088's shape, so it is not "the same") */
   lost: number;
   /** rond.ir types of the listing, when checked */
   types?: string[];
@@ -171,7 +171,7 @@ export async function findSimilar(full: string, api: RondApi): Promise<SimilarRe
       if (!item.price || item.price <= 0 || found.has(n) || !n.startsWith(prefix)) continue;
       const b = n.slice(4);
       const same = [...b].reduce((s, c, k) => s + (c === body[k] ? BOX_WEIGHT[k] : 0), 0);
-      found.set(n, { number: n, price: item.price, status: item.simCardStatus ?? null, same, shape: shapeScore(body, b), lost: structureLoss(body, b) });
+      found.set(n, { number: n, price: item.price, status: item.simCardStatus ?? null, same, shape: shapeScore(body, b), lost: Math.max(structureLoss(body, b), structureLoss(b, body)) });
     }
   };
 
