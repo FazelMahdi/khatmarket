@@ -1,0 +1,48 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  USER
+}
+
+model User {
+  id           String   @id @default(cuid())
+  username     String   @unique
+  passwordHash String
+  role         Role     @default(USER)
+  createdAt    DateTime @default(now())
+  lookups      Lookup[]
+}
+
+model Listing {
+  id          String   @id @default(cuid())
+  code        String?  @unique
+  number      String   @unique
+  prefix      String
+  operator    String   @default("MCI")
+  price       BigInt?
+  status      String?
+  patternTags String[]
+  source      String   @default("import")
+  importedAt  DateTime @default(now())
+
+  @@index([prefix])
+}
+
+model Lookup {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  number    String
+  result    Json
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+}
