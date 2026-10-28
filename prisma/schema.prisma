@@ -23,17 +23,25 @@ model User {
 
 model Listing {
   id          String   @id @default(cuid())
-  code        String?  @unique
+  code        String?
   number      String   @unique
   prefix      String
   operator    String   @default("MCI")
   price       BigInt?
   status      String?
+  priceType   String?
+  sellType    String?
+  special     String?
+  /// rond.ir algorithm ids (ground-truth labels from the "نوع رند" filter)
+  algorithms  String[] @default([])
   patternTags String[]
   source      String   @default("import")
   importedAt  DateTime @default(now())
 
+  updatedAt   DateTime @default(now()) @updatedAt
+
   @@index([prefix])
+  @@index([code])
 }
 
 model Lookup {

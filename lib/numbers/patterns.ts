@@ -1,7 +1,7 @@
 /**
  * Pattern ("رند") detectors.
  *
- * The catalogue (keys, Persian labels, priorities) mirrors the 39 algorithms
+ * The catalogue (keys, Persian labels, priorities) mirrors the 42 algorithms
  * rond.ir exposes in its filter. rond.ir does not publish the rules behind
  * them and listing items carry no label, so each detector below is our own
  * interpretation, checked against sample listings. Detectors marked
@@ -143,7 +143,20 @@ export const PATTERNS: PatternDef[] = [
 
 export const ORDINARY = { key: "ordinary", label: "معمولی", priority: 205 };
 
+const cache = new Map<string, PatternMatch[]>();
+
+/** Detected patterns, strongest (lowest priority) first. Memoized per number. */
 export function detectPatterns(body: string, prefix = "0912"): PatternMatch[] {
+  const key = prefix + body;
+  const hit = cache.get(key);
+  if (hit) return hit;
+  if (cache.size > 200_000) cache.clear();
+  const res = computePatterns(body, prefix);
+  cache.set(key, res);
+  return res;
+}
+
+function computePatterns(body: string, prefix: string): PatternMatch[] {
   const out: PatternMatch[] = [];
   for (const p of PATTERNS) {
     const strength = p.detect(body, prefix);

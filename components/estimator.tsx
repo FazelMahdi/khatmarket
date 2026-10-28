@@ -1,6 +1,7 @@
 "use client";
 import { Button, Card, Chip, Input, Label, Skeleton, TextField } from "@heroui/react";
 import { Search, Sparkles } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 import type { Estimate } from "@/lib/numbers/estimate";
 
@@ -93,9 +94,60 @@ function Result({ r }: { r: Estimate }) {
           <p className="rounded-2xl bg-default p-5 text-sm">آگهی مشابهی برای برآورد پیدا نشد.</p>
         )}
 
+        {r.search && (
+          <div className="flex flex-col gap-2 rounded-2xl border border-separator p-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="text-sm text-muted">جستجوی معادل در rond.ir</span>
+              <Link
+                href={`/search?prefix=${r.prefix}&mask=${r.search.mask}`}
+                className="digits rounded-lg bg-default px-3 py-1 text-lg font-bold tracking-wider hover:bg-accent/15"
+              >
+                {r.search.display}
+              </Link>
+            </div>
+            <p className="text-xs text-muted">
+              {r.search.reason} — {fmt.format(r.search.count)} آگهی قیمت‌دار با همین الگو
+            </p>
+            {r.alternatives.length > 1 && (
+              <div className="flex flex-wrap gap-1.5 pt-1">
+                {r.alternatives
+                  .filter((a) => a.mask !== r.search!.mask)
+                  .map((a) => (
+                    <Link
+                      key={a.mask}
+                      href={`/search?prefix=${r.prefix}&mask=${a.mask}`}
+                      className="digits rounded-full border border-separator px-2.5 py-0.5 text-xs hover:border-accent"
+                      title={a.reason}
+                    >
+                      {a.display} · {fmt.format(a.count)}
+                    </Link>
+                  ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {!r.search && r.alternatives.length > 0 && (
+          <div className="flex flex-col gap-2 rounded-2xl border border-dashed border-separator p-4">
+            <span className="text-sm text-muted">جستجوهای پیشنهادی (آگهی کافی برای قیمت‌گذاری با الگو نبود)</span>
+            <div className="flex flex-wrap gap-1.5">
+              {r.alternatives.map((a) => (
+                <Link
+                  key={a.mask}
+                  href={`/search?prefix=${r.prefix}&mask=${a.mask}`}
+                  className="digits rounded-full border border-separator px-2.5 py-0.5 text-xs hover:border-accent"
+                  title={a.reason}
+                >
+                  {a.display} · {fmt.format(a.count)}
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
         {r.neighbors.length > 0 && (
           <div>
-            <h3 className="mb-2 text-sm font-semibold">نزدیک‌ترین آگهی‌ها</h3>
+            <h3 className="mb-2 text-sm font-semibold">{r.method === "mask" ? "آگهی‌های همین الگو" : "نزدیک‌ترین آگهی‌ها"}</h3>
             <ul className="divide-y divide-separator rounded-2xl border border-separator">
               {r.neighbors.slice(0, 5).map((n) => (
                 <li key={n.number} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm">
@@ -106,6 +158,11 @@ function Result({ r }: { r: Estimate }) {
               ))}
             </ul>
           </div>
+        )}
+        {r.pricedListings < 1000 && (
+          <p className="rounded-xl bg-warning/10 px-3 py-2 text-xs">
+            فقط {fmt.format(r.pricedListings)} آگهی در دیتابیس است؛ برای قیمت دقیق داده‌های rond.ir را جمع کنید (npm run rond:collect).
+          </p>
         )}
         <p className="text-xs text-muted">
           بر اساس {fmt.format(r.pricedListings)} آگهی قیمت‌دار. قیمت‌ها قیمت درخواستی فروشنده‌ها هستند و قیمت قطعی معامله نیستند.

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { importPages } from "@/lib/import";
+import { invalidateListings } from "@/lib/listings";
 import { getSession } from "@/lib/session";
 
 export async function POST(req: Request) {
@@ -12,5 +13,7 @@ export async function POST(req: Request) {
   } catch {
     return NextResponse.json({ error: "JSON نامعتبر است" }, { status: 400 });
   }
-  return NextResponse.json(await importPages(json, "admin-import"));
+  const result = await importPages(json, "admin-import");
+  invalidateListings();
+  return NextResponse.json(result);
 }

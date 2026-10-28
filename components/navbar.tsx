@@ -19,6 +19,7 @@ export async function Navbar() {
           <span className="hidden sm:inline">قیمت‌یاب رند</span>
         </Link>
         <nav className="flex items-center gap-1">
+          <Link href="/search" className={linkCls}>جستجو</Link>
           {session ? (
             <>
               <Link href="/panel" className={linkCls}>پنل</Link>

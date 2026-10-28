@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { loadListings } from "@/lib/listings";
+import { loadModel } from "@/lib/model";
 import { estimatePrice } from "@/lib/numbers/estimate";
 import { parseMobile } from "@/lib/numbers/normalize";
 import { getSession } from "@/lib/session";
@@ -11,7 +12,7 @@ export async function POST(req: Request) {
   if (!parsed) {
     return NextResponse.json({ error: "شماره موبایل معتبر نیست (مثال: 09121003088)" }, { status: 400 });
   }
-  const result = estimatePrice(parsed.full, await loadListings(parsed.prefix));
+  const result = estimatePrice(parsed.full, await loadListings(), loadModel());
   if (!result) return NextResponse.json({ error: "خطا در محاسبه" }, { status: 500 });
 
   const session = await getSession();
