@@ -1,0 +1,282 @@
+[
+ {
+  "number": "09124398257",
+  "price": 175000000,
+  "status": "LIKE_NEW",
+  "operator": "MCI",
+  "source": "sample"
+ },
+ {
+  "number": "09121115961",
+  "price": 7990000000,
+  "status": "USED",
+  "operator": "MCI",
+  "source": "sample"
+ },
+ {
+  "number": "09121000799",
+  "price": 25000000000,
+  "status": "LIKE_NEW",
+  "operator": "MCI",
+  "source": "sample"
+ },
+ {
+  "number": "09122852779",
+  "price": 292000000,
+  "status": "LIKE_NEW",
+  "operator": "MCI",
+  "source": "sample"
+ },
+ {
+  "number": "09123336599",
+  "price": 640000000,
+  "status": "USED",
+  "operator": "MCI",
+  "source": "sample"
+ },
+ {
+  "number": "09125583968",
+  "price": 270000000,
+  "status": "USED",
+  "operator": "MCI",
+  "source": "sample"
+ },
+ {
+  "number": "09121614776",
+  "price": 710000000,
+  "status": "USED",
+  "operator": "MCI",
+  "source": "sample"
+ },
+ {
+  "number": "09128581966",
+  "price": 130000000,
+  "status": "USED",
+  "operator": "MCI",
+  "source": "sample"
+ },
+ {
+  "number": "09123806001",
+  "price": 550000000,
+  "status": "LIKE_NEW",
+  "operator": "MCI",
+  "source": "sample"
+ },
+ {
+  "number": "09121796321",
+  "price": 650000000,
+  "status": "LIKE_NEW",
+  "operator": "MCI",
+  "source": "sample"
+ },
+ {
+  "number": "09121406020",
+  "price": 3000000000,
+  "status": "LIKE_NEW",
+  "operator": "MCI",
+  "source": "sample"
+ },
+ {
+  "number": "09120541315",
+  "price": 125000000,
+  "status": "LIKE_NEW",
+  "operator": "MCI",
+  "source": "sample"
+ },
+ {
+  "number": "09121156627",
+  "price": 1400000000,
+  "status": "LIKE_NEW",
+  "operator": "MCI",
+  "source": "sample"
+ },
+ {
+  "number": "09122688781",
+  "price": 500000000,
+  "status": "LIKE_NEW",
+  "operator": "MCI",
+  "source": "sample"
+ },
+ {
+  "number": "09122219580",
+  "price": 380000000,
+  "status": "LIKE_NEW",
+  "operator": "MCI",
+  "source": "sample"
+ },
+ {
+  "number": "09122500940",
+  "price": 790000000,
+  "status": "LIKE_NEW",
+  "operator": "MCI",
+  "source": "sample"
+ },
+ {
+  "number": "09121135851",
+  "price": 1850000000,
+  "status": "BRAND_NEW_WITH_NAME",
+  "operator": "MCI",
+  "source": "sample"
+ },
+ {
+  "number": "09126453514",
+  "price": 149000000,
+  "status": "LIKE_NEW",
+  "operator": "MCI",
+  "source": "sample"
+ },
+ {
+  "number": "09127569757",
+  "price": 169000000,
+  "status": "LIKE_NEW",
+  "operator": "MCI",
+  "source": "sample"
+ },
+ {
+  "number": "09128910673",
+  "price": 140000000,
+  "status": "LIKE_NEW",
+  "operator": "MCI",
+  "source": "sample"
+ },
+ {
+  "number": "09129804224",
+  "price": 115000000,
+  "status": "BRAND_NEW_WITH_NAME",
+  "operator": "MCI",
+  "source": "sample"
+ },
+ {
+  "number": "09126909052",
+  "price": 270000000,
+  "status": "LIKE_NEW",
+  "operator": "MCI",
+  "source": "sample"
+ },
+ {
+  "number": "09120616509",
+  "price": 95000000,
+  "status": "LIKE_NEW",
+  "operator": "MCI",
+  "source": "sample"
+ },
+ {
+  "number": "09125000735",
+  "price": null,
+  "status": "LIKE_NEW",
+  "operator": "MCI",
+  "source": "sample"
+ },
+ {
+  "number": "09120499290",
+  "price": 100000000,
+  "status": "LIKE_NEW",
+  "operator": "MCI",
+  "source": "sample"
+ },
+ {
+  "number": "09122002700",
+  "price": null,
+  "status": "LIKE_NEW",
+  "operator": "MCI",
+  "source": "sample"
+ },
+ {
+  "number": "09126269403",
+  "price": 210000000,
+  "status": "LIKE_NEW",
+  "operator": "MCI",
+  "source": "sample"
+ },
+ {
+  "number": "09128112785",
+  "price": 145000000,
+  "status": "LIKE_NEW",
+  "operator": "MCI",
+  "source": "sample"
+ },
+ {
+  "number": "09123330429",
+  "price": 499000000,
+  "status": "LIKE_NEW",
+  "operator": "MCI",
+  "source": "sample"
+ },
+ {
+  "number": "09121008512",
+  "price": 3600000000,
+  "status": "LIKE_NEW",
+  "operator": "MCI",
+  "source": "sample"
+ },
+ {
+  "number": "09121114471",
+  "price": 14990000000,
+  "status": "LIKE_NEW",
+  "operator": "MCI",
+  "source": "sample"
+ },
+ {
+  "number": "09121010765",
+  "price": 4000000000,
+  "status": "LIKE_NEW",
+  "operator": "MCI",
+  "source": "sample"
+ },
+ {
+  "number": "09122215270",
+  "price": 390000000,
+  "status": "LIKE_NEW",
+  "operator": "MCI",
+  "source": "sample"
+ },
+ {
+  "number": "09127785007",
+  "price": 340000000,
+  "status": "USED",
+  "operator": "MCI",
+  "source": "sample"
+ },
+ {
+  "number": "09121223922",
+  "price": null,
+  "status": "LIKE_NEW",
+  "operator": "MCI",
+  "source": "sample"
+ },
+ {
+  "number": "09123085080",
+  "price": 560000000,
+  "status": "USED",
+  "operator": "MCI",
+  "source": "sample"
+ },
+ {
+  "number": "09124567890",
+  "price": 20000000000,
+  "status": "USED",
+  "operator": "MCI",
+  "source": "sample"
+ },
+ {
+  "number": "09126116900",
+  "price": 497000000,
+  "status": "LIKE_NEW",
+  "operator": "MCI",
+  "source": "sample"
+ },
+ {
+  "number": "09121187082",
+  "price": 1200000000,
+  "status": "LIKE_NEW",
+  "operator": "MCI",
+  "source": "sample"
+ },
+ {
+  "number": "09123172981",
+  "price": 260000000,
+  "status": "LIKE_NEW",
+  "operator": "MCI",
+  "source": "sample"
+ }
+]
