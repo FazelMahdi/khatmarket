@@ -54,7 +54,8 @@ export interface SimilarResult {
   queries: number;
 }
 
-const MIN_PRICED = 8;
+// Live search keeps widening until this many priced listings are found (each search is one page of 500).
+const MIN_PRICED = Number(process.env.ROND_LIVE_MIN_PRICED ?? 100);
 const CHECK_TYPES = 15;
 const TOP = 10;
 const CONCURRENCY = 4;
@@ -126,7 +127,7 @@ export function structureLoss(body: string, cand: string): number {
   return total ? (total - kept) / total : 0;
 }
 
-const jaccard = (a: string[], b: string[]) => {
+export const jaccard = (a: string[], b: string[]) => {
   const union = new Set([...a, ...b]);
   return union.size ? a.filter((x) => b.includes(x)).length / union.size : 1;
 };
@@ -135,8 +136,8 @@ const score = (m: SimilarListing) => m.same + m.shape;
 // Structure 3, rond.ir type 2: 09124567890 (same 7-run, fewer types) beats 09121230789
 // for 09121234567, but 09122114199 (same shape, no "کد پایین") stays behind 09121003188
 // for 09121003088.
-const distance = (m: SimilarListing) => 3 * m.lost + 2 * (1 - (m.typeMatch ?? 0.5));
-const rank = (a: SimilarListing, b: SimilarListing) =>
+export const distance = (m: SimilarListing) => 3 * m.lost + 2 * (1 - (m.typeMatch ?? 0.5));
+export const rank = (a: SimilarListing, b: SimilarListing) =>
   distance(a) - distance(b) || score(b) - score(a) || a.price - b.price;
 
 const quantile = (sorted: number[], q: number) => {
@@ -156,6 +157,12 @@ async function inChunks<T, R>(items: T[], fn: (t: T) => Promise<R>): Promise<R[]
   return out;
 }
 
+/** How close candidate body `b` is to query body `body`. */
+export function measure(body: string, b: string) {
+  const same = [...b].reduce((s, c, k) => s + (c === body[k] ? BOX_WEIGHT[k] : 0), 0);
+  return { same, shape: shapeScore(body, b), lost: Math.max(structureLoss(body, b), structureLoss(b, body)) };
+}
+
 export async function findSimilar(full: string, api: RondApi): Promise<SimilarResult> {
   const prefix = full.slice(0, 4);
   const body = full.slice(4);
@@ -169,9 +176,7 @@ export async function findSimilar(full: string, api: RondApi): Promise<SimilarRe
     for (const item of pages.flat()) {
       const n = item.simCardNumber;
       if (!item.price || item.price <= 0 || found.has(n) || !n.startsWith(prefix)) continue;
-      const b = n.slice(4);
-      const same = [...b].reduce((s, c, k) => s + (c === body[k] ? BOX_WEIGHT[k] : 0), 0);
-      found.set(n, { number: n, price: item.price, status: item.simCardStatus ?? null, same, shape: shapeScore(body, b), lost: Math.max(structureLoss(body, b), structureLoss(b, body)) });
+      found.set(n, { number: n, price: item.price, status: item.simCardStatus ?? null, ...measure(body, n.slice(4)) });
     }
   };
 
@@ -196,11 +201,16 @@ export async function findSimilar(full: string, api: RondApi): Promise<SimilarRe
   queries += checked.length;
   const matches = [...checked.sort(rank), ...byScore.slice(CHECK_TYPES)];
 
-  const exact = found.get(full);
-  if (exact) return { types, matches, price: { low: exact.price, mid: exact.price, high: exact.price }, confidence: "high", queries };
+  return { types, matches, ...priceFrom(full, matches), queries };
+}
+
+/** Price and confidence from ranked matches (best first). */
+export function priceFrom(full: string, matches: SimilarListing[]): Pick<SimilarResult, "price" | "confidence"> {
+  const exact = matches.find((m) => m.number === full);
+  if (exact) return { price: { low: exact.price, mid: exact.price, high: exact.price }, confidence: "high" };
 
   const top = matches.slice(0, TOP);
-  if (!top.length) return { types, matches, price: null, confidence: "low", queries };
+  if (!top.length) return { price: null, confidence: "low" };
   // Price only from listings about as close as the closest one; weaker ones would drag it
   // (09124567890 at 20B is the comparable for 09121234567, not the 0.3B part-sequences).
   const near = top.filter((m) => distance(m) <= distance(top[0]) + 0.5);
@@ -216,5 +226,5 @@ export async function findSimilar(full: string, api: RondApi): Promise<SimilarRe
     near.length >= 3 && spread < 1.5 ? "high" : near.length >= 2 && spread < 3 ? "medium" : "low";
   if (top[0].typeMatch !== 1 && confidence === "high") confidence = "medium";
   if (distance(top[0]) > 1) confidence = "low";
-  return { types, matches, price, confidence, queries };
+  return { price, confidence };
 }

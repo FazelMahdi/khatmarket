@@ -194,7 +194,9 @@ function Result({ r }: { r: Estimate }) {
           </p>
         )}
         <p className="text-xs text-muted">
-          بر اساس {fmt.format(r.pricedListings)} آگهی قیمت‌دار{r.method === "rond" && (r.source === "local" ? " از نسخهٔ همگام‌شدهٔ rond.ir" : " که همین حالا در rond.ir پیدا شد")}. قیمت‌ها قیمت درخواستی فروشنده‌ها هستند و قیمت قطعی معامله نیستند.
+          {r.method === "rond" && r.source === "local"
+            ? `مقایسه با همهٔ ${fmt.format(r.pricedListings)} آگهی قیمت‌دار این پیش‌شماره در نسخهٔ همگام‌شدهٔ rond.ir.`
+            : `بر اساس ${fmt.format(r.pricedListings)} آگهی قیمت‌دار${r.method === "rond" ? " که همین حالا در rond.ir پیدا شد" : ""}.`} قیمت‌ها قیمت درخواستی فروشنده‌ها هستند و قیمت قطعی معامله نیستند.
         </p>
       </Card.Content>
     </Card>

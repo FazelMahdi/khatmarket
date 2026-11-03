@@ -10,6 +10,7 @@ import { detectPatterns } from "@/lib/numbers/patterns";
 import { ALGORITHM_BY_ID } from "@/lib/numbers/algorithms";
 import { rondApi } from "@/lib/rond/client";
 import { hasLocalCoverage, localRondApi } from "@/lib/rond/local-api";
+import { listingsOf, rankAll } from "@/lib/rond/rank-all";
 import { findSimilar } from "@/lib/rond/similar";
 import { getSession } from "@/lib/session";
 
@@ -23,7 +24,11 @@ async function estimate(full: string): Promise<Estimate | null> {
   let result: Estimate | null;
   try {
     const base = estimatePrice(full, [])!;
-    const found = await findSimilar(full, local ? localRondApi : rondApi);
+    // Locally: compare against every synced listing. Live: widening digit-box searches.
+    const found = local
+      ? rankAll(full, await listingsOf(full.slice(0, 4)), await localRondApi.types(full))
+      : { scanned: undefined, ...(await findSimilar(full, rondApi)) };
+    const scanned = found.scanned ?? found.matches.length;
     const patterns = found.types.map((t) => ({
       key: ALGORITHM_BY_ID.get(t.id)?.key ?? t.id,
       label: t.algorithm,
@@ -39,7 +44,7 @@ async function estimate(full: string): Promise<Estimate | null> {
       confidence: found.confidence,
       method: found.price ? "rond" : "none",
       source: local ? "local" : "live",
-      pricedListings: found.matches.length,
+      pricedListings: scanned,
       neighbors: found.matches.slice(0, 10).map((m) => ({
         number: m.number,
         price: m.price,
@@ -51,7 +56,8 @@ async function estimate(full: string): Promise<Estimate | null> {
       result.ai = await aiPrice(
         full,
         found.types.map((t) => t.algorithm),
-        found.matches.slice(0, 20).map((m) => ({ number: m.number, price: m.price, types: typesOf(m.number, m.types), lost: m.lost })),
+        scanned,
+        found.matches.slice(0, 30).map((m) => ({ number: m.number, price: m.price, types: typesOf(m.number, m.types), lost: m.lost })),
       ).catch((e) => {
         console.warn("[estimate] AvalAI:", (e as Error).message);
         return null;

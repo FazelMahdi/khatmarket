@@ -68,17 +68,18 @@ export function checkAnswer(raw: Record<string, unknown> | null, candidates: Can
   };
 }
 
-export async function aiPrice(number: string, types: string[], candidates: Candidate[]): Promise<AiPrice | null> {
+export async function aiPrice(number: string, types: string[], scanned: number, candidates: Candidate[]): Promise<AiPrice | null> {
   if (!candidates.length) return null;
   const hit = cache.get(number);
   if (hit && Date.now() - hit.at < CACHE_MS) return hit.value;
 
   const list = candidates
-    .slice(0, 20)
+    .slice(0, 30)
     .map((c) => `${c.number} | ${c.price} | ${c.types.join("، ") || "معمولی"}${c.lost != null ? ` | lost=${c.lost.toFixed(2)}` : ""}`)
     .join("\n");
   const user = `Query: ${number}
 Query rond types: ${types.join("، ") || "معمولی"}
+These are the ${Math.min(30, candidates.length)} closest of ${scanned} priced rond.ir listings compared, best first.
 Candidates (number | asking price in toman | rond types | lost = share of the query's structure the candidate breaks, 0 is identical):
 ${list}`;
 
