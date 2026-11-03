@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { aiPrice } from "@/lib/ai/pricer";
+import { avalaiEnabled } from "@/lib/ai/avalai";
 import { prisma } from "@/lib/db";
 import { loadListings } from "@/lib/listings";
 import { loadModel } from "@/lib/model";
@@ -7,39 +9,59 @@ import { parseMobile } from "@/lib/numbers/normalize";
 import { detectPatterns } from "@/lib/numbers/patterns";
 import { ALGORITHM_BY_ID } from "@/lib/numbers/algorithms";
 import { rondApi } from "@/lib/rond/client";
+import { hasLocalCoverage, localRondApi } from "@/lib/rond/local-api";
 import { findSimilar } from "@/lib/rond/similar";
 import { getSession } from "@/lib/session";
 
-/** Most similar listings live on rond.ir; the local database is the fallback. */
+/**
+ * Most similar listings: from the local copy of rond.ir when `rond:sync` has
+ * filled it (all numbers, fast), else live on rond.ir; the old local
+ * estimator is the last fallback. AvalAI then picks comparables and a price.
+ */
 async function estimate(full: string): Promise<Estimate | null> {
+  const local = await hasLocalCoverage(full.slice(0, 4));
+  let result: Estimate | null;
   try {
     const base = estimatePrice(full, [])!;
-    const live = await findSimilar(full, rondApi);
-    const patterns = live.types.map((t) => ({
+    const found = await findSimilar(full, local ? localRondApi : rondApi);
+    const patterns = found.types.map((t) => ({
       key: ALGORITHM_BY_ID.get(t.id)?.key ?? t.id,
       label: t.algorithm,
       priority: t.priority,
       strength: 1,
     }));
-    return {
+    const typesOf = (n: string, known?: string[]) => known ?? detectPatterns(n.slice(4), n.slice(0, 4)).map((t) => t.label);
+    result = {
       ...base,
       // rond.ir's own classification replaces the local detectors when it has one
       ...(patterns.length ? { patterns, primary: patterns[0] } : {}),
-      price: live.price,
-      confidence: live.confidence,
-      method: live.price ? "rond" : "none",
-      pricedListings: live.matches.length,
-      neighbors: live.matches.slice(0, 10).map((m) => ({
+      price: found.price,
+      confidence: found.confidence,
+      method: found.price ? "rond" : "none",
+      source: local ? "local" : "live",
+      pricedListings: found.matches.length,
+      neighbors: found.matches.slice(0, 10).map((m) => ({
         number: m.number,
         price: m.price,
         similarity: (m.same + m.shape) / 9.75,
-        patterns: m.types ?? detectPatterns(m.number.slice(4), m.number.slice(0, 4)).map((t) => t.label),
+        patterns: typesOf(m.number, m.types),
       })),
     };
+    if (avalaiEnabled() && found.matches.length) {
+      result.ai = await aiPrice(
+        full,
+        found.types.map((t) => t.algorithm),
+        found.matches.slice(0, 20).map((m) => ({ number: m.number, price: m.price, types: typesOf(m.number, m.types), lost: m.lost })),
+      ).catch((e) => {
+        console.warn("[estimate] AvalAI:", (e as Error).message);
+        return null;
+      });
+    }
   } catch (e) {
-    console.warn("[estimate] live rond.ir search failed, using local listings:", (e as Error).message);
-    return estimatePrice(full, await loadListings(), loadModel());
+    console.warn("[estimate] rond.ir search failed, using local listings:", (e as Error).message);
+    result = estimatePrice(full, await loadListings(), loadModel());
   }
+  return result;
 }
 
 export async function POST(req: Request) {

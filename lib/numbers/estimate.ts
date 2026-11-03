@@ -53,6 +53,15 @@ export interface Estimate {
   search: MaskSearch | null;
   /** Other searches a person could run, with their result counts */
   alternatives: MaskSearch[];
+  /** Where the comparable listings came from (method "rond") */
+  source?: "local" | "live";
+  /** AvalAI's suggestion from the same comparables, when AVALAI_API_KEY is set */
+  ai?: {
+    model: string;
+    price: { low: number; mid: number; high: number };
+    comparables: string[];
+    reason: string;
+  } | null;
 }
 
 const K = 8;
