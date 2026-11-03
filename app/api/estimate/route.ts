@@ -2,8 +2,6 @@ import { NextResponse } from "next/server";
 import { aiPrice } from "@/lib/ai/pricer";
 import { avalaiEnabled } from "@/lib/ai/avalai";
 import { prisma } from "@/lib/db";
-import { loadListings } from "@/lib/listings";
-import { loadModel } from "@/lib/model";
 import { estimatePrice, type Estimate } from "@/lib/numbers/estimate";
 import { parseMobile } from "@/lib/numbers/normalize";
 import { detectPatterns } from "@/lib/numbers/patterns";
@@ -19,9 +17,23 @@ import { getSession } from "@/lib/session";
  * filled it (all numbers, fast), else live on rond.ir; the old local
  * estimator is the last fallback. AvalAI then picks comparables and a price.
  */
-async function estimate(full: string): Promise<Estimate | null> {
+/** Why there is no rond.ir data, in words the user can act on. */
+class NoDataError extends Error {}
+
+function explain(e: unknown): string {
+  const msg = (e as Error).message ?? "";
+  if (/challenge|ROND_COOKIE|rond-bot HTTP/i.test(msg)) {
+    return "rond.ir درخواست را رد کرد (کوکی ArvanCloud نیست یا منقضی شده). مقدار ROND_COOKIE را از مرورگر در .env بگذارید و سرور را دوباره اجرا کنید.";
+  }
+  if (/fetch failed|ENOTFOUND|ECONN|timeout|abort/i.test(msg)) {
+    return "به rond.ir دسترسی نیست (اینترنت یا فیلتر شبکه). اتصال را بررسی کنید.";
+  }
+  return `جستجو در rond.ir ناموفق بود: ${msg.slice(0, 160)}`;
+}
+
+async function estimate(full: string): Promise<Estimate> {
   const local = await hasLocalCoverage(full.slice(0, 4));
-  let result: Estimate | null;
+  let result: Estimate;
   try {
     const base = estimatePrice(full, [])!;
     // Locally: compare against every synced listing. Live: widening digit-box searches.
@@ -64,8 +76,10 @@ async function estimate(full: string): Promise<Estimate | null> {
       });
     }
   } catch (e) {
-    console.warn("[estimate] rond.ir search failed, using local listings:", (e as Error).message);
-    result = estimatePrice(full, await loadListings(), loadModel());
+    // No local copy of rond.ir and no live access: a price from a few sample
+    // listings would look real and be wrong, so say what is missing instead.
+    console.warn("[estimate] rond.ir search failed:", (e as Error).message);
+    throw new NoDataError(explain(e));
   }
   return result;
 }
@@ -76,8 +90,13 @@ export async function POST(req: Request) {
   if (!parsed) {
     return NextResponse.json({ error: "شماره موبایل معتبر نیست (مثال: 09121003088)" }, { status: 400 });
   }
-  const result = await estimate(parsed.full);
-  if (!result) return NextResponse.json({ error: "خطا در محاسبه" }, { status: 500 });
+  let result: Estimate;
+  try {
+    result = await estimate(parsed.full);
+  } catch (e) {
+    if (e instanceof NoDataError) return NextResponse.json({ error: e.message }, { status: 503 });
+    throw e;
+  }
 
   const session = await getSession();
   if (session) {
