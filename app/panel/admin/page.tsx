@@ -1,4 +1,5 @@
 import { Card, Chip } from "@heroui/react";
+import { AdminSetup } from "@/components/admin-setup";
 import { ImportForm } from "@/components/import-form";
 import { prisma } from "@/lib/db";
 
@@ -28,10 +29,11 @@ export default async function Admin() {
           </Card>
         ))}
       </div>
+      <AdminSetup />
       <Card>
         <Card.Header>
           <Card.Title>همگام‌سازی ساعتی با rond.ir</Card.Title>
-          <Card.Description>با `npm run rond:sync` روی سرور اجرا می‌شود.</Card.Description>
+          <Card.Description>با <code className="digits">npm run rond:sync</code> روی سرور اجرا می‌شود.</Card.Description>
         </Card.Header>
         <Card.Content>
           {runs.length === 0 ? (

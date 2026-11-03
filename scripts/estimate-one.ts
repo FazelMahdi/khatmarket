@@ -23,7 +23,7 @@ async function main() {
   console.log("types:", found.types.map((t) => t.algorithm).join("، ") || "معمولی");
   for (const m of found.matches.slice(0, 10)) console.log(`  ${m.number}  ${m.price.toLocaleString()}  lost=${m.lost.toFixed(2)}  ${(m.types ?? []).join("، ")}`);
   console.log("algorithmic price:", found.price, found.confidence);
-  if (avalaiEnabled()) {
+  if (await avalaiEnabled()) {
     const typesOf = (n: string, t?: string[]) => t ?? detectPatterns(n.slice(4), n.slice(0, 4)).map((x) => x.label);
     const ai = await aiPrice(p.full, found.types.map((t) => t.algorithm), scanned, found.matches.slice(0, 30).map((m) => ({ number: m.number, price: m.price, types: typesOf(m.number, m.types), lost: m.lost })));
     console.log("AvalAI:", ai);

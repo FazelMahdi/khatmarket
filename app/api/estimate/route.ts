@@ -23,7 +23,7 @@ class NoDataError extends Error {}
 function explain(e: unknown): string {
   const msg = (e as Error).message ?? "";
   if (/challenge|ROND_COOKIE|rond-bot HTTP/i.test(msg)) {
-    return "rond.ir درخواست را رد کرد (کوکی ArvanCloud نیست یا منقضی شده). مقدار ROND_COOKIE را از مرورگر در .env بگذارید و سرور را دوباره اجرا کنید.";
+    return "rond.ir درخواست را رد کرد (کوکی ArvanCloud نیست یا منقضی شده). کوکی rond.ir را در پنل مدیریت ← تنظیمات بگذارید؛ بخش «وضعیت» همان‌جا می‌گوید مشکل کجاست.";
   }
   if (/fetch failed|ENOTFOUND|ECONN|timeout|abort/i.test(msg)) {
     return "به rond.ir دسترسی نیست (اینترنت یا فیلتر شبکه). اتصال را بررسی کنید.";
@@ -64,7 +64,7 @@ async function estimate(full: string): Promise<Estimate> {
         patterns: typesOf(m.number, m.types),
       })),
     };
-    if (avalaiEnabled() && found.matches.length) {
+    if ((await avalaiEnabled()) && found.matches.length) {
       result.ai = await aiPrice(
         full,
         found.types.map((t) => t.algorithm),

@@ -12,7 +12,7 @@ const MAX_FILES = 400;
 
 async function get(url: string): Promise<string | null> {
   try {
-    const res = await fetch(url, { headers: headers({ accept: "*/*" }) });
+    const res = await fetch(url, { headers: await headers({ accept: "*/*" }) });
     return res.ok ? await res.text() : null;
   } catch {
     return null;

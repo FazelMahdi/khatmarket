@@ -73,3 +73,10 @@ model Lookup {
 
   @@index([userId, createdAt])
 }
+
+/// Admin-editable settings (AvalAI key, rond.ir cookie, ...); .env is the fallback
+model Setting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @default(now()) @updatedAt
+}
