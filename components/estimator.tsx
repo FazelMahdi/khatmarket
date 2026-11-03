@@ -78,7 +78,33 @@ function Result({ r }: { r: Estimate }) {
           ))}
         </div>
 
-        {r.price ? (
+        {r.ai && (
+          <div className="rounded-2xl bg-accent/10 p-5">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-sm text-muted">پیشنهاد قیمت هوش مصنوعی</p>
+              <Chip size="sm" variant="secondary" className="digits">{r.ai.model}</Chip>
+            </div>
+            <p className="mt-1 text-3xl font-extrabold sm:text-4xl">
+              {fmt.format(r.ai.price.mid)} <span className="text-base font-medium text-muted">تومان</span>
+            </p>
+            {r.ai.price.low !== r.ai.price.high && (
+              <p className="mt-2 text-sm text-muted">
+                بازه: {fmt.format(r.ai.price.low)} تا {fmt.format(r.ai.price.high)} تومان
+              </p>
+            )}
+            {r.ai.reason && <p className="mt-3 text-sm leading-7">{r.ai.reason}</p>}
+            <p className="mt-2 text-xs text-muted">
+              مقایسه با: <span className="digits">{r.ai.comparables.join("، ")}</span>
+            </p>
+          </div>
+        )}
+
+        {r.price && r.ai ? (
+          <p className="text-sm text-muted">
+            برآورد الگوریتمی از همان آگهی‌ها: {fmt.format(r.price.mid)} تومان
+            {r.price.low !== r.price.high && ` (${fmt.format(r.price.low)} تا ${fmt.format(r.price.high)})`}
+          </p>
+        ) : r.price ? (
           <div className="rounded-2xl bg-accent/10 p-5">
             <p className="text-sm text-muted">قیمت تقریبی</p>
             <p className="mt-1 text-3xl font-extrabold sm:text-4xl">
@@ -168,7 +194,9 @@ function Result({ r }: { r: Estimate }) {
           </p>
         )}
         <p className="text-xs text-muted">
-          بر اساس {fmt.format(r.pricedListings)} آگهی قیمت‌دار{r.method === "rond" && " که همین حالا در rond.ir پیدا شد"}. قیمت‌ها قیمت درخواستی فروشنده‌ها هستند و قیمت قطعی معامله نیستند.
+          {r.method === "rond" && r.source === "local"
+            ? `مقایسه با همهٔ ${fmt.format(r.pricedListings)} آگهی قیمت‌دار این پیش‌شماره در نسخهٔ همگام‌شدهٔ rond.ir.`
+            : `بر اساس ${fmt.format(r.pricedListings)} آگهی قیمت‌دار${r.method === "rond" ? " که همین حالا در rond.ir پیدا شد" : ""}.`} قیمت‌ها قیمت درخواستی فروشنده‌ها هستند و قیمت قطعی معامله نیستند.
         </p>
       </Card.Content>
     </Card>

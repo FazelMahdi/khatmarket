@@ -65,12 +65,15 @@ export async function collectListings(opts: CollectOptions) {
 /** The request field behind rond.ir's "نوع رند" filter (found by `rond:discover`). */
 export function algorithmField(): { field: string; isArray: boolean } | null {
   if (process.env.ROND_ALGO_FIELD) return { field: process.env.ROND_ALGO_FIELD, isArray: true };
-  if (!existsSync("data/rond-api.json")) return null;
-  const api = JSON.parse(readFileSync("data/rond-api.json", "utf8"));
-  return api.algorithmField ? { field: api.algorithmField, isArray: api.algorithmFieldIsArray !== false } : null;
+  if (existsSync("data/rond-api.json")) {
+    const api = JSON.parse(readFileSync("data/rond-api.json", "utf8"));
+    if (api.algorithmField) return { field: api.algorithmField, isArray: api.algorithmFieldIsArray !== false };
+  }
+  // The field rond.ir's own filter sends (found in the site's requests).
+  return { field: "rondTypeIds", isArray: true };
 }
 
-/** One filtered pass per algorithm to record rond.ir's own labels. Returns false when no filter field is known. */
+/** One filtered pass per algorithm to record rond.ir's own labels. */
 export async function collectLabels(opts: CollectOptions): Promise<boolean> {
   const algo = algorithmField();
   if (!algo) return false;
