@@ -182,7 +182,12 @@ function Result({ r }: { r: Estimate }) {
                     {r.method === "rond" && `${fmt.format(Math.round(n.similarity * 100))}٪ شباهت · `}
                     {n.patterns.slice(0, 2).join("، ")}
                   </span>
-                  <span>{fmt.format(n.price)} تومان</span>
+                  <span className="text-end">
+                    {fmt.format(n.price)} تومان
+                    {n.adjusted && (
+                      <span className="block text-xs text-muted">≈ {fmt.format(n.adjusted)} با کد این شماره</span>
+                    )}
+                  </span>
                 </li>
               ))}
             </ul>

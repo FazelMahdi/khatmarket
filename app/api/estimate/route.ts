@@ -8,6 +8,7 @@ import { detectPatterns } from "@/lib/numbers/patterns";
 import { ALGORITHM_BY_ID } from "@/lib/numbers/algorithms";
 import { rondApi } from "@/lib/rond/client";
 import { hasLocalCoverage, localRondApi } from "@/lib/rond/local-api";
+import { snapshotLevels } from "@/lib/rond/levels";
 import { listingsOf, rankAll } from "@/lib/rond/rank-all";
 import { findSimilar } from "@/lib/rond/similar";
 import { getSession } from "@/lib/session";
@@ -39,7 +40,7 @@ async function estimate(full: string): Promise<Estimate> {
     // Locally: compare against every synced listing. Live: widening digit-box searches.
     const found = local
       ? rankAll(full, await listingsOf(full.slice(0, 4)), await localRondApi.types(full))
-      : { scanned: undefined, ...(await findSimilar(full, rondApi)) };
+      : { scanned: undefined, ...(await findSimilar(full, rondApi, snapshotLevels(full.slice(0, 4)))) };
     const scanned = found.scanned ?? found.matches.length;
     const patterns = found.types.map((t) => ({
       key: ALGORITHM_BY_ID.get(t.id)?.key ?? t.id,
@@ -62,6 +63,7 @@ async function estimate(full: string): Promise<Estimate> {
         price: m.price,
         similarity: (m.same + m.shape) / 9.75,
         patterns: typesOf(m.number, m.types),
+        ...(Math.abs(Math.log(m.ratio)) > 0.05 ? { adjusted: Math.round(m.price * m.ratio) } : {}),
       })),
     };
     if ((await avalaiEnabled()) && found.matches.length) {
@@ -69,7 +71,13 @@ async function estimate(full: string): Promise<Estimate> {
         full,
         found.types.map((t) => t.algorithm),
         scanned,
-        found.matches.slice(0, 30).map((m) => ({ number: m.number, price: m.price, types: typesOf(m.number, m.types), lost: m.lost })),
+        found.matches.slice(0, 30).map((m) => ({
+          number: m.number,
+          price: m.price,
+          adjusted: Math.round(m.price * m.ratio),
+          types: typesOf(m.number, m.types),
+          lost: m.lost,
+        })),
       ).catch((e) => {
         console.warn("[estimate] AvalAI:", (e as Error).message);
         return null;

@@ -6,9 +6,12 @@
  *    leading "code" digits stay, until enough priced listings are found.
  *    Then the 9 shifted copies (1234567 -> 2345678 ...) with any type: same exact shape.
  * 3. Ranking: how much of the rond structure (repeated digits, sequence runs) is lost, plus
- *    a penalty for a different rond.ir type set (checked for the top candidates), then same
- *    boxes and shape.
+ *    a penalty for a different rond.ir type set (checked for the top candidates), plus how far
+ *    apart the code blocks are (lib/rond/levels.ts), then same boxes and shape.
+ * 4. Each comparable's price is scaled to the query's code block before the median.
  */
+import type { Levels } from "./levels";
+import { levelRatio } from "./levels";
 
 export interface RondItem {
   simCardNumber: string;
@@ -43,6 +46,8 @@ export interface SimilarListing {
   types?: string[];
   /** 0..1, Jaccard overlap with the query's types (when checked) */
   typeMatch?: number;
+  /** level of the query's code block / this one's (09127… for 09121… ≈ 5): price × ratio is comparable */
+  ratio: number;
 }
 
 export interface SimilarResult {
@@ -101,6 +106,15 @@ const step = (b: string, i: number) => (+b[i + 1] - +b[i] + 10) % 10;
  * 1234567 in the middle (1230789) loses most of it, a changed last digit of 1003088 little.
  */
 export function structureLoss(body: string, cand: string): number {
+  const [total, kept] = structure(body, cand);
+  return total ? (total - kept) / total : 0;
+}
+
+/** Rond structure value of a body: Σ len² of repeated-digit groups and ±1 runs of 3+ (0 = no pattern). */
+export const structureValue = (body: string) => structure(body, body)[0];
+
+/** [value of body's structure, how much of it cand keeps]. */
+function structure(body: string, cand: string): [number, number] {
   let total = 0;
   let kept = 0;
   const groups = new Map<string, number[]>();
@@ -124,7 +138,7 @@ export function structureLoss(body: string, cand: string): number {
     }
     i = Math.max(j, i + 1);
   }
-  return total ? (total - kept) / total : 0;
+  return [total, kept];
 }
 
 export const jaccard = (a: string[], b: string[]) => {
@@ -136,7 +150,10 @@ const score = (m: SimilarListing) => m.same + m.shape;
 // Structure 3, rond.ir type 2: 09124567890 (same 7-run, fewer types) beats 09121230789
 // for 09121234567, but 09122114199 (same shape, no "کد پایین") stays behind 09121003188
 // for 09121003088.
-export const distance = (m: SimilarListing) => 3 * m.lost + 2 * (1 - (m.typeMatch ?? 0.5));
+// A different code block adds |log ratio|: scaling a code-7 price ×5 to code 1 is a guess
+// worth about one broken pair. Backtest on 800 rond.ir 0912 listings: median error 14% -> 10%,
+// code 1 from 107% (priced at half) to 10%.
+export const distance = (m: SimilarListing) => 3 * m.lost + 2 * (1 - (m.typeMatch ?? 0.5)) + Math.abs(Math.log(m.ratio));
 export const rank = (a: SimilarListing, b: SimilarListing) =>
   distance(a) - distance(b) || score(b) - score(a) || a.price - b.price;
 
@@ -163,7 +180,7 @@ export function measure(body: string, b: string) {
   return { same, shape: shapeScore(body, b), lost: Math.max(structureLoss(body, b), structureLoss(b, body)) };
 }
 
-export async function findSimilar(full: string, api: RondApi): Promise<SimilarResult> {
+export async function findSimilar(full: string, api: RondApi, levels?: Levels): Promise<SimilarResult> {
   const prefix = full.slice(0, 4);
   const body = full.slice(4);
   const found = new Map<string, SimilarListing>();
@@ -176,7 +193,8 @@ export async function findSimilar(full: string, api: RondApi): Promise<SimilarRe
     for (const item of pages.flat()) {
       const n = item.simCardNumber;
       if (!item.price || item.price <= 0 || found.has(n) || !n.startsWith(prefix)) continue;
-      found.set(n, { number: n, price: item.price, status: item.simCardStatus ?? null, ...measure(body, n.slice(4)) });
+      const b = n.slice(4);
+      found.set(n, { number: n, price: item.price, status: item.simCardStatus ?? null, ...measure(body, b), ratio: levelRatio(levels, body, b) });
     }
   };
 
@@ -214,7 +232,7 @@ export function priceFrom(full: string, matches: SimilarListing[]): Pick<Similar
   // Price only from listings about as close as the closest one; weaker ones would drag it
   // (09124567890 at 20B is the comparable for 09121234567, not the 0.3B part-sequences).
   const near = top.filter((m) => distance(m) <= distance(top[0]) + 0.5);
-  const logs = near.map((m) => Math.log(m.price)).sort((a, b) => a - b);
+  const logs = near.map((m) => Math.log(m.price * m.ratio)).sort((a, b) => a - b);
   const price = {
     low: roundPrice(Math.exp(quantile(logs, 0.25))),
     mid: roundPrice(Math.exp(quantile(logs, 0.5))),

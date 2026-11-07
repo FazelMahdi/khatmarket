@@ -9,6 +9,8 @@ import { avalaiChat } from "./avalai";
 export interface Candidate {
   number: string;
   price: number;
+  /** price scaled to the query's code block (کد ۱ vs کد ۷ …) */
+  adjusted?: number;
   types: string[];
   /** 0..1 share of rond structure broken */
   lost?: number;
@@ -26,10 +28,11 @@ const CACHE_MS = 60 * 60_000;
 
 const SYSTEM = `You price Iranian mobile SIM numbers ("رند" numbers) from real asking prices on rond.ir.
 Value comes from the 7 digits after the pre-code: repeated digits, runs (1234), zeros, mirrors, pairs, and how early they appear.
+The code (first digit after the pre-code, and for 0912 the first 3 digits) sets the base level: 0912 1xx is about 5x 0912 7xx, and 0912 100 / 110 / 111 far above 0912 13x-19x. Prices of other codes are already scaled to the query's code in the "adjusted" column; price from that column.
 Rules:
 - Use ONLY the candidate listings given. Pick the 1-5 whose rond structure is closest to the query (same kind and strength of pattern, not merely similar digits).
 - A candidate with a clearly stronger or weaker pattern is not a comparable.
-- Base the price on the chosen comparables' prices (toman). Do not invent listings.
+- Base the price on the chosen comparables' adjusted prices (toman). Do not invent listings.
 - Answer with JSON only: {"comparables":["09..."],"low":int,"mid":int,"high":int,"reason":"<one or two short sentences in Persian>"}`;
 
 function parseJson(text: string): Record<string, unknown> | null {
@@ -59,7 +62,7 @@ export function checkAnswer(raw: Record<string, unknown> | null, candidates: Can
   if (!comparables.length || nums.some((n) => !Number.isFinite(n) || n <= 0)) return null;
   const [low, mid, high] = [...nums].sort((a, b) => a - b);
   // The suggested price has to sit near what the chosen comparables actually ask.
-  const prices = comparables.map((n) => byNumber.get(n)!.price);
+  const prices = comparables.map((n) => byNumber.get(n)!).map((c) => c.adjusted ?? c.price);
   if (mid < Math.min(...prices) / 2 || mid > Math.max(...prices) * 2) return null;
   return {
     price: { low: round(low), mid: round(mid), high: round(high) },
@@ -75,12 +78,12 @@ export async function aiPrice(number: string, types: string[], scanned: number, 
 
   const list = candidates
     .slice(0, 30)
-    .map((c) => `${c.number} | ${c.price} | ${c.types.join("، ") || "معمولی"}${c.lost != null ? ` | lost=${c.lost.toFixed(2)}` : ""}`)
+    .map((c) => `${c.number} | ${c.price} | ${c.adjusted ?? c.price} | ${c.types.join("، ") || "معمولی"}${c.lost != null ? ` | lost=${c.lost.toFixed(2)}` : ""}`)
     .join("\n");
   const user = `Query: ${number}
 Query rond types: ${types.join("، ") || "معمولی"}
 These are the ${Math.min(30, candidates.length)} closest of ${scanned} priced rond.ir listings compared, best first.
-Candidates (number | asking price in toman | rond types | lost = share of the query's structure the candidate breaks, 0 is identical):
+Candidates (number | asking price in toman | adjusted = price scaled to the query's code | rond types | lost = share of the query's structure the candidate breaks, 0 is identical):
 ${list}`;
 
   const { model, content } = await avalaiChat(

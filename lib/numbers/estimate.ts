@@ -14,6 +14,8 @@ export interface Neighbor {
   price: number;
   similarity: number;
   patterns: string[];
+  /** price scaled to the query's code block, when the code differs (lib/rond/levels.ts) */
+  adjusted?: number;
 }
 
 export type Confidence = "low" | "medium" | "high";

@@ -14,9 +14,10 @@ describe("rankAll", () => {
     const r = rankAll("09121003088", rows, [{ id: "x", algorithm: "کد پایین", priority: 170 }]);
     expect(r.scanned).toBe(4);
     expect(r.matches).toHaveLength(4);
-    // Same structure (lost 0) and same rond.ir type first; the much rounder 18B number is not a peer.
-    expect(r.matches.map((m) => m.number).slice(0, 2)).toEqual(["09127003088", "09121003188"]);
-    expect(r.matches[0].lost).toBe(0);
+    // Code 1 before the same shape in code 7 (0912 700 is ~1/12 of 0912 100), and the code-7
+    // price is scaled up to code 1 rather than taken as is. The 18B number is not a peer.
+    expect(r.matches.map((m) => m.number).slice(0, 2)).toEqual(["09121003188", "09127003088"]);
+    expect(r.matches[1].ratio).toBeCloseTo(5000 / 400);
   });
 
   it("handles a full pre-code quickly", () => {
