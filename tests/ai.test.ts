@@ -46,4 +46,25 @@ describe("avalaiChat", () => {
     expect(seen).toEqual(["free-model", "cheap-model"]);
     expect(r.model).toBe("cheap-model");
   });
+
+  it("retries with higher max_tokens when reasoning ate the budget", async () => {
+    vi.stubEnv("AVALAI_API_KEY", "test");
+    vi.stubEnv("AVALAI_MODELS", "gpt-6-luna");
+    const maxTokensSeen: number[] = [];
+    vi.stubGlobal("fetch", async (_url: string, init: RequestInit) => {
+      const body = JSON.parse(String(init.body)) as { max_tokens: number };
+      maxTokensSeen.push(body.max_tokens);
+      if (body.max_tokens < 8000) {
+        return Response.json({
+          choices: [{ message: { content: "" } }],
+          usage: { completion_tokens_details: { reasoning_tokens: 500 } },
+        });
+      }
+      return Response.json({ choices: [{ message: { content: '{"ok":true}' } }] });
+    });
+    const { avalaiChat } = await import("../lib/ai/avalai");
+    const r = await avalaiChat([{ role: "user", content: "hi" }], { maxTokens: 4000 });
+    expect(maxTokensSeen).toEqual([4000, 8000]);
+    expect(r.content).toBe('{"ok":true}');
+  });
 });

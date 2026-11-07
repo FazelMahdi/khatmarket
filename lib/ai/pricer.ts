@@ -83,10 +83,13 @@ These are the ${Math.min(30, candidates.length)} closest of ${scanned} priced ro
 Candidates (number | asking price in toman | rond types | lost = share of the query's structure the candidate breaks, 0 is identical):
 ${list}`;
 
-  const { model, content } = await avalaiChat([
-    { role: "system", content: SYSTEM },
-    { role: "user", content: user },
-  ]);
+  const { model, content } = await avalaiChat(
+    [
+      { role: "system", content: SYSTEM },
+      { role: "user", content: user },
+    ],
+    { maxTokens: 4000 },
+  );
   const checked = checkAnswer(parseJson(content), candidates);
   if (!checked) throw new Error(`AvalAI ${model}: answer did not match the candidates`);
   const value = { model, ...checked };
